@@ -1,0 +1,48 @@
+name: Deploy KMP WebApp to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master # 👈 Check: Use the name of your main branch (e.g., master or main)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write # 👈 Required permission to deploy
+  id-token: write # 👈 Required permission for the deployment action
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repository code
+      - uses: actions/checkout@v4
+
+      # 2. Set up Java (required for Gradle/Kotlin)
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # 3. Build the KMP Web app
+      - name: Build WasmJS App
+        # This task generates the files in the path below
+        run: ./gradlew wasmJsBrowserDistribution
+
+      # 4. Configure GitHub Pages environment
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      # 5. Upload the built artifact
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # 👇 THIS IS THE CRUCIAL PATH YOU CONFIRMED
+          path: 'composeApp/build/dist/wasmJs/productionExecutable'
+
+      # 6. Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
